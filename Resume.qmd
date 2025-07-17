@@ -1,0 +1,91 @@
+---
+title: "Resume Experiment"
+format: html
+execute: 
+  echo: false
+---
+
+```{r}
+#| message: false
+
+library(tidyverse)
+library(tidymodels)
+library(broom)
+library(marginaleffects)
+library(easystats)
+
+x <- read_csv("https://raw.githubusercontent.com/PPBDS/bootcamp/refs/heads/master/_internal/data/resume.csv",
+        show_col_types = FALSE)
+
+
+x <- x %>%
+  mutate(call = factor(call, levels = c("no", "yes")))  # "no" = 0, "yes" = 1
+
+# 4. Fit a binary logistic regression model
+model <- glm(call ~ ethnicity + gender + quality + jobs + experience + honors + holes + special,
+             data = x,
+             family = "binomial")
+
+# 5. View model summary
+summary(model)        
+
+model2 <- glm(call ~ ethnicity * quality + gender + jobs + experience + honors + holes + special + city,
+              data = x,
+              family = "binomial")
+summary(model2)
+
+
+
+library(parsnip)
+
+model2_parsnip <- logistic_reg() %>%
+  set_engine("glm") %>%
+  fit(call ~ ethnicity * quality + gender + jobs + experience + honors + holes + special + city,
+      data = x)
+
+check_predictions(extract_fit_engine(model2_parsnip))
+
+```
+
+<!-- name indicates applicant's first name.
+
+gender indicates gender.
+
+ethnicity indicates ethnicity (i.e., Caucasian-sounding vs. African-American sounding first name).
+
+quality indicatesquality of resume.
+
+call indicates whether the applicant was called back?
+
+city indicates city: Boston or Chicago.
+
+jobs indicates number of jobs listed on resume.
+
+experience indicates number of years of work experience on the resume.
+
+honors: Did the resume mention some honors?
+
+holes: Does the resume have some employment holes?
+
+special: Does the resume mention some special skills? -->
+
+Scenario 1: An social justice advocate in Boston or Chicago is looking to battle social justice issues and trying to check for discrimination.
+
+Scenario 2: A Policy Analyst  in the USA observing callback rates for different applicants to see the impact on their salary.
+
+Scenario 3: A researcher is conducting a follow-up study 20 years later in the US regarding employment discrimination. They are seeing what they find, if progress has been made, and what challenges have emerged.
+
+
+Rows are the units, Columns are the outcomes.
+
+Each unit, or row, is a different applicant.
+Columns: Recieve or did not recieve call-back, Salary at employment, Salary after 10 years.
+Causal Model.
+Treatment: Black or White name
+Covariates: Companies/Industry they applied to. State/City they applied, Gender, Age
+
+Assumptions: 
+Modern Day Resume Readers do not check the name.
+Lack of callback indicates discrimination
+Fair chance of being reviewed 
+Only some resume checkers are biased
